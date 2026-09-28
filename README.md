@@ -25,9 +25,12 @@ List each puzzle's items in the correct order, top to bottom. The game shuffles 
 
 When the list runs out, players see "No puzzle today", so keep a few weeks ahead.
 
-## Testing a specific day
+## Replays and testing
 
-Add `#day3` to the URL to play puzzle 3. Before the launch date, a day picker appears automatically. Neither mode saves stats.
+- `#day3` replays puzzle 3 once its day has arrived. Future days show "unlocks on…" instead.
+- `#test` (or `#test-day10` for a specific day) opens the whole schedule, including future days, so you can check upcoming puzzles. Keep that link to yourself.
+
+Neither mode saves stats.
 
 ## Files
 

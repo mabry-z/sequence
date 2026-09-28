@@ -208,14 +208,25 @@ main{max-width:420px;margin:0 auto;padding-block:20px 40px}
 
   var store = load();
   var today = dayIndex(new Date());
-  var preview = today < 0 || /^#?day\d+$/.test(location.hash);
+  // #day3 replays an earlier day; days that haven't arrived stay locked.
+  // #test or #test-day30 opens the whole schedule, for the owner. None save stats.
+  var mTest = /^#?test(?:-day(\d+))?$/.exec(location.hash), mDay = /^#?day(\d+)$/.exec(location.hash);
+  var preview = today < 0 || !!mTest || !!mDay;
+  var LAST = (mTest || today < 0) ? P.length - 1 : Math.min(today, P.length - 1);
+  window.addEventListener("hashchange", function(){ location.reload(); });
   var idx, g, sel = null, timer = null;
 
   function freshGame(i){ var n = P[i].items.length; return { order:startOrder(i, n), locked:new Array(n).fill(false), hist:[], done:false, win:false }; }
 
   function begin(i){
     idx = i; sel = null;
-    if (idx < 0 || idx >= P.length){ $("game").hidden = true; $("noPuzzle").hidden = false; return; }
+    if (idx < 0 || idx > LAST){
+      var d0 = dateFor(idx);
+      $("noPuzzle").querySelector("p").textContent = (idx > LAST && idx < P.length)
+        ? "Sequence #" + (idx + 1) + " unlocks on " + DAYS[d0.getDay()] + ", " + MONTHS[d0.getMonth()] + " " + d0.getDate() + "."
+        : "No puzzle today. Check back tomorrow.";
+      $("game").hidden = true; $("noPuzzle").hidden = false; return;
+    }
     $("game").hidden = false; $("noPuzzle").hidden = true;
     g = (!preview && store.games[idx]) ? store.games[idx] : freshGame(idx);
     if (!preview) store.games[idx] = g;
@@ -341,9 +352,14 @@ main{max-width:420px;margin:0 auto;padding-block:20px 40px}
     if (today < 0){
       var d = LAUNCH;
       $("previewText").textContent = "Preview. Sequence launches " + DAYS[d.getDay()] + ", " + MONTHS[d.getMonth()] + " " + d.getDate() + ". Pick any day to play it. Stats aren't saved.";
+    } else if (mTest){
+      $("previewText").textContent = "Test mode: the whole schedule, including days that haven't unlocked. Keep this link to yourself. Stats aren't saved.";
+    } else {
+      $("previewText").textContent = "Replaying an earlier day. Stats aren't saved.";
     }
     var chips = $("chips"); chips.innerHTML = "";
     P.forEach(function(_, i){
+      if (i > LAST) return;
       var c = document.createElement("button"); c.className = "chip";
       c.textContent = DAYS[dateFor(i).getDay()].slice(0, 3);
       c.setAttribute("aria-pressed", i === idx ? "true" : "false");
@@ -369,8 +385,8 @@ main{max-width:420px;margin:0 auto;padding-block:20px 40px}
   document.querySelectorAll(".overlay").forEach(function(o){ o.addEventListener("click", function(e){ if (e.target === o || e.target.closest("[data-close]")) closeAll(); }); });
   document.addEventListener("keydown", function(e){ if (e.key === "Escape") closeAll(); });
 
-  var hashDay = /^#?day(\d+)$/.exec(location.hash);
-  begin(hashDay ? parseInt(hashDay[1], 10) - 1 : (today < 0 ? 0 : today));
+  var asked = mTest && mTest[1] ? mTest[1] : mDay ? mDay[1] : null;
+  begin(asked !== null ? parseInt(asked, 10) - 1 : (today < 0 || mTest ? 0 : today));
 })();
 </script>
 </body>
